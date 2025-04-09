@@ -1,4 +1,3 @@
-import { create } from "domain";
 import mongoose from "mongoose";
 
 const shortUrlSchema = new mongoose.Schema({
@@ -10,7 +9,7 @@ const shortUrlSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-    }, 
+    },
     clicks: {
         type: Number,
         default: 0,

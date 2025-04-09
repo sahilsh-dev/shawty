@@ -19,7 +19,7 @@ export const base62Encode = (num: number): string => {
 export const generateToken = (userId: string): string => {
     return jwt.sign(
         { id: userId },
-        process.env.JWT_SECRET || 'secretkey',
+        process.env.JWT_SECRET || 'mysecretkey',
         { expiresIn: '7d' }
     )
 }
