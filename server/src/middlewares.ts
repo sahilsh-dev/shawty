@@ -1,5 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
+import User from './models/user';
 import jwt from 'jsonwebtoken';
+
+interface JwtPayload {
+    id: string,
+    iat: number,
+    exp: number
+}
 
 declare global {
     namespace Express {
@@ -20,8 +27,8 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction):
     const token = authHeader.split(' ')[1];
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = decoded;
+        const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+        req.user = User.findById(decoded.id)
         next();
     } catch (err) {
         res.status(401).json({ error: 'Token is not valid' });
