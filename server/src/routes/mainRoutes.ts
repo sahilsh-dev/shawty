@@ -1,11 +1,19 @@
 import { Router } from "express";
 import ShortUrl from "../models/shortUrl";
-import { validateUrl, base62Encode } from "../utils";
+import { validateUrl, base62Encode, getLastCacheCounter } from "../utils";
 import { authMiddleware } from "../middlewares";
 
 const router = Router();
-// Use Redis for this count cache
-let cacheCounter = 1;
+let cacheCounter = 0;
+(async () => {
+    try {
+        cacheCounter = await getLastCacheCounter();
+        console.log(`Count cache initialized at: ${cacheCounter}`);
+    } catch (err) {
+        console.error("Failed to init count cache, using default value:", err);
+    }
+})();
+
 
 router.post("/create-url", authMiddleware, async (req, res) => {
     const { originalUrl } = req.body;
@@ -22,6 +30,7 @@ router.post("/create-url", authMiddleware, async (req, res) => {
             short: encodedCode,
         });
         await shortUrl.save();
+        await req.user.save();
         req.user.shortUrl = shortUrl;
         res.status(201).json({
             originalUrl: shortUrl.original,
@@ -33,10 +42,20 @@ router.post("/create-url", authMiddleware, async (req, res) => {
     }
 })
 
-router.get("/:shortUrlCode", (req, res) => {
-    const { shortUrlCode } = req.params;
-    console.log(shortUrlCode);
-    res.send("Redirecting to original URL");
+router.get("/:shortUrlCode", async (req, res) => {
+    try {
+        const { shortUrlCode } = req.params;
+        const shortUrl = await ShortUrl.findOne({ short: shortUrlCode }).exec();
+        if (!shortUrl) {
+            res.status(404).json({ error: "Short URL not found" });
+            return;
+        }
+        console.info("Redirecting to original URL:", shortUrl.original);
+        res.redirect(shortUrl.original);
+    } catch (error) {
+        console.log("Error fetching short URL:", error);
+        res.status(500).json({ error: "Failed to fetch short url" });
+    }
 })
 
 export default router;

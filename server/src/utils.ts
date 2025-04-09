@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import argon2 from 'argon2';
+import ShortUrl from './models/shortUrl';
 
 export const validateUrl = (url: string): boolean => {
     const urlRegex = /^(ftp|http|https):\/\/[^ "]+$/;
@@ -12,6 +13,9 @@ export const base62Encode = (num: number): string => {
     while (num > 0) {
         encoded = chars[num % 62] + encoded;
         num = Math.floor(num / 62);
+    }
+    while (encoded.length < 7) {
+        encoded = chars[0] + encoded;
     }
     return encoded
 }
@@ -46,3 +50,9 @@ export const hashPassword = async (password: string): Promise<string> => {
         throw new Error('Password hashing failed');
     }
 };
+
+export const getLastCacheCounter = async (): Promise<number> => {
+    // This function should implement logic to retrieve the last cache counter from Redis or any other storage
+    const count = await ShortUrl.countDocuments();
+    return count + 1;
+}
