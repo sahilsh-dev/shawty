@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    shortUrls: [{
+    urls: [{
         type: Schema.Types.ObjectId,
         ref: 'ShortUrl'
     }]

@@ -14,6 +14,17 @@ let cacheCounter = 0;
     }
 })();
 
+router.get("/about", authMiddleware, async (req, res) => {
+    try {
+        const urlsData = await req.user.populate("urls");
+        res.status(200).json({
+            urlsData: urlsData.urls
+        });
+    } catch (error) {
+        console.error("Error fetching URLs:", error);
+        res.status(500).json({ error: "Failed to fetch URLs" });
+    }
+})
 
 router.post("/create-url", authMiddleware, async (req, res) => {
     const { originalUrl } = req.body;
@@ -30,8 +41,10 @@ router.post("/create-url", authMiddleware, async (req, res) => {
             short: encodedCode,
         });
         await shortUrl.save();
+        req.user.urls.push(shortUrl._id);
         await req.user.save();
-        req.user.shortUrl = shortUrl;
+        console.log("Short URL created:", shortUrl);
+
         res.status(201).json({
             originalUrl: shortUrl.original,
             shortUrl: shortUrl.short

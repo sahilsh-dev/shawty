@@ -18,7 +18,7 @@ declare global {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mysecretkey';
 
-export const authMiddleware = (req: Request, res: Response, next: NextFunction): void => {
+export const authMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         res.status(401).json({ error: 'No token, authorization denied' });
@@ -28,7 +28,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction):
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-        req.user = User.findById(decoded.id)
+        req.user = await User.findById(decoded.id)
         next();
     } catch (err) {
         res.status(401).json({ error: 'Token is not valid' });
