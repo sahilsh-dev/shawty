@@ -17,6 +17,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { ShortenUrlDialog } from "@/components/shorten-url-dialog"
 import { fetchUrlData } from "@/lib/api"
 import type { UrlData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
@@ -31,44 +32,45 @@ export default function DashboardPage() {
   const itemsPerPage = 10
 
   // Fetch URL data from API
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true)
-        const urlsData: any[] = await fetchUrlData()
-        if (urlsData) {
-          const transformedUrlsData: UrlData[] = urlsData.map((item) => ({
-            id: item._id,
-            originalUrl: item.original,
-            shortUrl: `${API_URL}/api/${item.short}`,
-            totalClicks: item.clicks,
-            createdAt: new Date(item.createdAt).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-            }),
-            isExpired: false
-          }))
-          setUrlData(transformedUrlsData);
-        } else {
-          toast({
-            title: "Error",
-            description: "Failed to load URL data",
-            variant: "destructive",
-          })
-        }
-      } catch (error) {
-        console.error("Error fetching URL data:", error)
+  const loadData = async () => {
+    try {
+      setIsLoading(true)
+      const urlsData: any[] = await fetchUrlData()
+      if (urlsData) {
+        const transformedUrlsData: UrlData[] = urlsData.map((item) => ({
+          id: item._id,
+          originalUrl: item.original,
+          shortUrl: `${API_URL}/api/${item.short}`,
+          totalClicks: item.clicks,
+          createdAt: new Date(item.createdAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          }),
+          isExpired: false
+        }))
+        setUrlData(transformedUrlsData);
+      } else {
         toast({
           title: "Error",
           description: "Failed to load URL data",
           variant: "destructive",
         })
-      } finally {
-        setIsLoading(false)
       }
+    } catch (error) {
+      console.error("Error fetching URL data:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load URL data",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
-    loadData()
+  }
+
+  useEffect(() => {
+    loadData();
   }, [toast])
 
   const filteredData = urlData.filter(
@@ -76,6 +78,10 @@ export default function DashboardPage() {
       url.originalUrl?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       url.shortUrl?.toLowerCase().includes(searchQuery.toLowerCase()),
   )
+
+  function handleUrlShortened() {
+    loadData()
+  }
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage)
   const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
@@ -92,6 +98,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">Manage and analyze your shortened URLs</p>
         </div>
+        <ShortenUrlDialog onSuccess={handleUrlShortened} />
       </div>
 
       {/* Stats cards */}

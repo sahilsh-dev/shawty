@@ -31,3 +31,13 @@ export async function fetchUrlData() {
     throw new Error("Failed to fetch URL data");
   }
 }
+
+export async function shortenUrl(longUrl: string) {
+  return axiosClient
+    .post("/api/create-url", { originalUrl: longUrl })
+    .then((response) => response.data)
+    .catch((error) => {
+      console.error("Error shortening URL:", error)
+      throw error
+    })
+}
