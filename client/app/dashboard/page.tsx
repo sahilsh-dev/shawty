@@ -26,8 +26,9 @@ export default function DashboardPage() {
   const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const [urlData, setUrlData] = useState<UrlData>([])
+  const [urlData, setUrlData] = useState<UrlData[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL
   const itemsPerPage = 10
 
   // Fetch URL data from API
@@ -35,12 +36,17 @@ export default function DashboardPage() {
     const loadData = async () => {
       try {
         setIsLoading(true)
-        const urlsData = await fetchUrlData()
+        const urlsData: any[] = await fetchUrlData()
         if (urlsData != undefined) {
-          urlsData.map((item) => {
-
-          })
-          setUrlData(urlsData): 
+          urlsData.map((item) => ({
+            id: item._id,
+            originalUrl: item.original,
+            shortUrl: `${API_URL}/${item.short}`,
+            totalClicks: item.clicks,
+            createdAt: item.createdAt,
+            isExpired: false
+          }))
+          setUrlData(urlsData);
         } else {
           toast({
             title: "Error",
