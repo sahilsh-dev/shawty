@@ -63,6 +63,8 @@ router.get("/:shortUrlCode", async (req, res) => {
             res.status(404).json({ error: "Short URL not found" });
             return;
         }
+        shortUrl.clicks += 1;
+        await shortUrl.save();
         console.info("Redirecting to original URL:", shortUrl.original);
         res.redirect(shortUrl.original);
     } catch (error) {
