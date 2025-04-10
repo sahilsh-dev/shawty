@@ -6,7 +6,7 @@ import morgan from 'morgan';
 import mainRoutes from './routes/mainRoutes';
 import authRoutes from './routes/authRoutes';
 
-dotenv.config();
+dotenv.config({ path: '.env.development' })
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || '').then(() => {
     console.log('Connected to MongoDB');
