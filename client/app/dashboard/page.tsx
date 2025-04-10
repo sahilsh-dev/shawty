@@ -37,12 +37,16 @@ export default function DashboardPage() {
         setIsLoading(true)
         const urlsData: any[] = await fetchUrlData()
         if (urlsData) {
-          const transformedUrlsData = urlsData.map((item) => ({
+          const transformedUrlsData: UrlData[] = urlsData.map((item) => ({
             id: item._id,
             originalUrl: item.original,
             shortUrl: `${API_URL}/${item.short}`,
             totalClicks: item.clicks,
-            createdAt: item.createdAt,
+            createdAt: new Date(item.createdAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            }),
             isExpired: false
           }))
           setUrlData(transformedUrlsData);
