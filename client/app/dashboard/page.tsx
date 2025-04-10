@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { v4 as uuid } from "uuid"
 import { Calendar, ExternalLink, Search } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -37,8 +36,8 @@ export default function DashboardPage() {
       try {
         setIsLoading(true)
         const urlsData: any[] = await fetchUrlData()
-        if (urlsData != undefined) {
-          urlsData.map((item) => ({
+        if (urlsData) {
+          const transformedUrlsData = urlsData.map((item) => ({
             id: item._id,
             originalUrl: item.original,
             shortUrl: `${API_URL}/${item.short}`,
@@ -46,7 +45,7 @@ export default function DashboardPage() {
             createdAt: item.createdAt,
             isExpired: false
           }))
-          setUrlData(urlsData);
+          setUrlData(transformedUrlsData);
         } else {
           toast({
             title: "Error",
@@ -65,15 +64,13 @@ export default function DashboardPage() {
         setIsLoading(false)
       }
     }
-
     loadData()
   }, [toast])
 
-  // Filter and paginate data
   const filteredData = urlData.filter(
     (url) =>
-      url.originalUrl.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      url.shortUrl.toLowerCase().includes(searchQuery.toLowerCase()),
+      url.originalUrl?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      url.shortUrl?.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage)
@@ -81,7 +78,7 @@ export default function DashboardPage() {
 
   // Stats
   const totalUrls = urlData.length
-  const totalClicks = urlData.reduce((sum, url) => sum + url.totalClicks, 0)
+  const totalClicks = urlData.reduce((acc, url) => acc + url.totalClicks, 0)
   const activeUrls = urlData.filter((url) => !url.isExpired).length
 
   return (
