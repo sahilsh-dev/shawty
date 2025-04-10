@@ -40,7 +40,7 @@ export default function DashboardPage() {
           const transformedUrlsData: UrlData[] = urlsData.map((item) => ({
             id: item._id,
             originalUrl: item.original,
-            shortUrl: `${API_URL}/${item.short}`,
+            shortUrl: `${API_URL}/api/${item.short}`,
             totalClicks: item.clicks,
             createdAt: new Date(item.createdAt).toLocaleDateString('en-US', {
               year: 'numeric',
