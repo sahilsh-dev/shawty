@@ -9,6 +9,7 @@ import { BarChart3, Link2, LogOut, Menu, PieChart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useToast } from "@/hooks/use-toast"
+import { isAuthenticated, removeToken, isTokenExpired } from "@/lib/auth"
 
 export default function DashboardLayout({
   children,
@@ -23,26 +24,26 @@ export default function DashboardLayout({
     setIsMounted(true)
 
     // Check if user is authenticated
-    const token = localStorage.getItem("auth_token")
-    if (!token) {
+    if (!isAuthenticated()) {
       router.push("/login")
       return
     }
 
-    try {
-      // Validate token (in a real app, this would be more robust)
-      const payload = JSON.parse(atob(token))
-      if (payload.exp < Date.now()) {
-        throw new Error("Token expired")
-      }
-    } catch (error) {
-      localStorage.removeItem("auth_token")
+    // Check if token is expired
+    if (isTokenExpired()) {
+      removeToken()
+      toast({
+        title: "Session expired",
+        description: "Your session has expired. Please log in again.",
+        variant: "destructive",
+      })
       router.push("/login")
+      return
     }
-  }, [router])
+  }, [router, toast])
 
   const handleLogout = () => {
-    localStorage.removeItem("auth_token")
+    removeToken()
     toast({
       title: "Logged out",
       description: "You have been logged out successfully",

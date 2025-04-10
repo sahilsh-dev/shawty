@@ -11,72 +11,58 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
+import { login } from "@/lib/api"
+import { setToken, isAuthenticated } from "@/lib/auth"
 
 export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [email, setEmail] = useState("intern@dracoid.com")
+  const [password, setPassword] = useState("Test123")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  // For debugging
+  // Check if user is already authenticated
   useEffect(() => {
-    console.log("Login page mounted")
-  }, [])
+    if (isAuthenticated()) {
+      router.push("/dashboard")
+    }
+  }, [router])
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Login attempt with:", { email, password })
-
     setIsLoading(true)
 
-    // Hardcoded credentials check - using exact string comparison
-    if (email === "intern@dacoid.com" && password === "Test123") {
-      console.log("Credentials match")
-
-      try {
-        // Create a simple JWT token
-        const token = btoa(JSON.stringify({ email, exp: Date.now() + 24 * 60 * 60 * 1000 }))
-        console.log("Token created")
-
-        // Store token in localStorage
-        localStorage.setItem("auth_token", token)
-        console.log("Token stored in localStorage")
+    try {
+      const response = await login(email, password)
+      if (response.token) {
+        // Store the JWT token
+        setToken(response.token)
 
         toast({
           title: "Login successful",
           description: "Welcome to Shawty dashboard",
         })
 
-        console.log("Redirecting to dashboard...")
-        // Use direct window location change
-        window.location.href = "/dashboard"
-      } catch (error) {
-        console.error("Error during login:", error)
+        // Navigate to dashboard
+        router.push("/dashboard")
+      } else {
         toast({
-          title: "Login error",
-          description: "An error occurred during login",
+          title: "Login failed",
           variant: "destructive",
         })
-        setIsLoading(false)
       }
-    } else {
-      console.log("Credentials do not match")
+    } catch (error) {
+      console.error("Login error:", error)
       toast({
-        title: "Login failed",
-        description: "Invalid email or password",
+        title: "Login error",
+        description: "An error occurred during login",
         variant: "destructive",
       })
+    } finally {
       setIsLoading(false)
     }
   }
-
-  // Pre-fill credentials for demo purposes
-  useEffect(() => {
-    setEmail("intern@dacoid.com")
-    setPassword("Test123")
-  }, [])
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -96,7 +82,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="intern@dacoid.com"
+                placeholder="joe@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -130,29 +116,10 @@ export default function LoginPage() {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
+          <CardFooter>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Logging in..." : "Login"}
             </Button>
-
-            {/* Direct link as fallback */}
-            <div className="text-sm text-center text-muted-foreground">
-              Or
-              <a
-                href="/dashboard"
-                className="ml-1 text-primary hover:underline"
-                onClick={(e) => {
-                  e.preventDefault()
-                  const token = btoa(
-                    JSON.stringify({ email: "intern@dacoid.com", exp: Date.now() + 24 * 60 * 60 * 1000 }),
-                  )
-                  localStorage.setItem("auth_token", token)
-                  window.location.href = "/dashboard"
-                }}
-              >
-                click here to enter
-              </a>
-            </div>
           </CardFooter>
         </form>
       </Card>

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { v4 as uuid } from "uuid"
 import { Calendar, ExternalLink, Search } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -17,15 +18,53 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import { mockUrlData } from "@/lib/mock-data"
+import { fetchUrlData } from "@/lib/api"
+import type { UrlData } from "@/lib/types"
+import { useToast } from "@/hooks/use-toast"
 
 export default function DashboardPage() {
+  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
+  const [urlData, setUrlData] = useState<UrlData>([])
+  const [isLoading, setIsLoading] = useState(true)
   const itemsPerPage = 10
 
+  // Fetch URL data from API
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true)
+        const urlsData = await fetchUrlData()
+        if (urlsData != undefined) {
+          urlsData.map((item) => {
+
+          })
+          setUrlData(urlsData): 
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to load URL data",
+            variant: "destructive",
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching URL data:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load URL data",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadData()
+  }, [toast])
+
   // Filter and paginate data
-  const filteredData = mockUrlData.filter(
+  const filteredData = urlData.filter(
     (url) =>
       url.originalUrl.toLowerCase().includes(searchQuery.toLowerCase()) ||
       url.shortUrl.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -35,9 +74,9 @@ export default function DashboardPage() {
   const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   // Stats
-  const totalUrls = mockUrlData.length
-  const totalClicks = mockUrlData.reduce((sum, url) => sum + url.totalClicks, 0)
-  const activeUrls = mockUrlData.filter((url) => !url.isExpired).length
+  const totalUrls = urlData.length
+  const totalClicks = urlData.reduce((sum, url) => sum + url.totalClicks, 0)
+  const activeUrls = urlData.filter((url) => !url.isExpired).length
 
   return (
     <div className="space-y-6">
@@ -92,121 +131,129 @@ export default function DashboardPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Original URL</TableHead>
-                <TableHead>Short URL</TableHead>
-                <TableHead className="text-right">Clicks</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.map((url) => (
-                <TableRow key={url.id}>
-                  <TableCell className="max-w-[200px] truncate font-medium">{url.originalUrl}</TableCell>
-                  <TableCell>{url.shortUrl}</TableCell>
-                  <TableCell className="text-right">{url.totalClicks}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      {url.createdAt}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={url.isExpired ? "destructive" : "default"}>
-                      {url.isExpired ? "Expired" : "Active"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" asChild>
-                      <a href={url.originalUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                        <span className="sr-only">Open original URL</span>
-                      </a>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {paginatedData.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    No URLs found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-
-          {/* Pagination */}
-          {filteredData.length > 0 && (
-            <div className="mt-4">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        if (currentPage > 1) setCurrentPage(currentPage - 1)
-                      }}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                    />
-                  </PaginationItem>
-
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    const pageNumber = i + 1
-                    return (
-                      <PaginationItem key={pageNumber}>
-                        <PaginationLink
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setCurrentPage(pageNumber)
-                          }}
-                          isActive={currentPage === pageNumber}
-                        >
-                          {pageNumber}
-                        </PaginationLink>
-                      </PaginationItem>
-                    )
-                  })}
-
-                  {totalPages > 5 && (
-                    <>
-                      <PaginationItem>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                      <PaginationItem>
-                        <PaginationLink
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setCurrentPage(totalPages)
-                          }}
-                          isActive={currentPage === totalPages}
-                        >
-                          {totalPages}
-                        </PaginationLink>
-                      </PaginationItem>
-                    </>
-                  )}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        if (currentPage < totalPages) setCurrentPage(currentPage + 1)
-                      }}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
             </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Original URL</TableHead>
+                    <TableHead>Short URL</TableHead>
+                    <TableHead className="text-right">Clicks</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedData.map((url) => (
+                    <TableRow key={url.id}>
+                      <TableCell className="max-w-[200px] truncate font-medium">{url.originalUrl}</TableCell>
+                      <TableCell>{url.shortUrl}</TableCell>
+                      <TableCell className="text-right">{url.totalClicks}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          {url.createdAt}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={url.isExpired ? "destructive" : "default"}>
+                          {url.isExpired ? "Expired" : "Active"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" asChild>
+                          <a href={url.originalUrl} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4" />
+                            <span className="sr-only">Open original URL</span>
+                          </a>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {paginatedData.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center">
+                        No URLs found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+
+              {/* Pagination */}
+              {filteredData.length > 0 && (
+                <div className="mt-4">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            if (currentPage > 1) setCurrentPage(currentPage - 1)
+                          }}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+
+                      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                        const pageNumber = i + 1
+                        return (
+                          <PaginationItem key={pageNumber}>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setCurrentPage(pageNumber)
+                              }}
+                              isActive={currentPage === pageNumber}
+                            >
+                              {pageNumber}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )
+                      })}
+
+                      {totalPages > 5 && (
+                        <>
+                          <PaginationItem>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                          <PaginationItem>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setCurrentPage(totalPages)
+                              }}
+                              isActive={currentPage === totalPages}
+                            >
+                              {totalPages}
+                            </PaginationLink>
+                          </PaginationItem>
+                        </>
+                      )}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            if (currentPage < totalPages) setCurrentPage(currentPage + 1)
+                          }}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
