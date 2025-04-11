@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Calendar, ExternalLink, Search } from "lucide-react"
+import { Calendar, ExternalLink, Search, QrCode } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { ShortenUrlDialog } from "@/components/shorten-url-dialog"
+import { QrCodeDialog } from "@/components/qr-code-dialog"
 import { fetchUrlData } from "@/lib/api"
 import type { UrlData } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
@@ -28,6 +29,11 @@ export default function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [urlData, setUrlData] = useState<UrlData[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  const [qrCodeUrl, setQrCodeUrl] = useState("")
+  const [qrCodeShortUrl, setQrCodeShortUrl] = useState("")
+  const [isQrCodeOpen, setIsQrCodeOpen] = useState(false)
+
   const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL
   const itemsPerPage = 10
 
@@ -81,6 +87,12 @@ export default function DashboardPage() {
 
   function handleUrlShortened() {
     loadData()
+  }
+
+  const handleShowQrCode = (url: string, shortUrl: string) => {
+    setQrCodeUrl(url)
+    setQrCodeShortUrl(shortUrl)
+    setIsQrCodeOpen(true)
   }
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage)
@@ -164,7 +176,7 @@ export default function DashboardPage() {
                 </TableHeader>
                 <TableBody>
                   {paginatedData.map((url) => (
-                    <TableRow key={url.id}>
+                      <TableRow key={url.id}>
                       <TableCell className="max-w-[200px] truncate font-medium">{url.originalUrl}</TableCell>
                       <TableCell>{url.shortUrl}</TableCell>
                       <TableCell className="text-right">{url.totalClicks}</TableCell>
@@ -180,12 +192,28 @@ export default function DashboardPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" asChild>
-                          <a href={url.originalUrl} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-4 w-4" />
-                            <span className="sr-only">Open original URL</span>
-                          </a>
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleShowQrCode(url.shortUrl, url.shortUrl)}
+                            title="Generate QR Code"
+                          >
+                            <QrCode className="h-4 w-4" />
+                            <span className="sr-only">Generate QR Code</span>
+                          </Button>
+                          <Button variant="ghost" size="icon" asChild>
+                            <a
+                              href={url.originalUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Open original URL"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              <span className="sr-only">Open original URL</span>
+                            </a>
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -271,6 +299,14 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* QR Code Dialog */}
+      <QrCodeDialog
+        url={qrCodeUrl}
+        shortUrl={qrCodeShortUrl}
+        isOpen={isQrCodeOpen}
+        onClose={() => setIsQrCodeOpen(false)}
+      />
     </div>
   )
 }
