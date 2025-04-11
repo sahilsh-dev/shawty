@@ -3,8 +3,12 @@ import argon2 from 'argon2';
 import ShortUrl from './models/shortUrl';
 
 export const validateUrl = (url: string): boolean => {
-    const urlRegex = /^(ftp|http|https):\/\/[^ "]+$/;
-    return urlRegex.test(url);
+    try {
+        const parsedUrl = new URL(url);
+        return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+    } catch (error) {
+        return false;
+    }
 }
 
 export const base62Encode = (num: number): string => {
