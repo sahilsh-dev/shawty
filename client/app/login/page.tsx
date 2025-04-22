@@ -17,7 +17,7 @@ import { setToken, isAuthenticated } from "@/lib/auth"
 export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const [email, setEmail] = useState("intern@dracoid.com")
+  const [email, setEmail] = useState("test@gmail.com")
   const [password, setPassword] = useState("Test123")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
